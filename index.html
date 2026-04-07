@@ -10,9 +10,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.png">
     <title>✨ Генератор имён | PWA приложение</title>
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * {
@@ -169,6 +167,15 @@
             transform: translateY(-2px);
             border-color: #ffbfb0;
         }
+        /* Стиль для активной кнопки уведомлений */
+        .btn-notify-active {
+            background: linear-gradient(105deg, #a8e6cf, #d4edda);
+            color: #2d5a3b;
+            border: none;
+        }
+        .btn-notify-active i {
+            color: #2d7a4b;
+        }
 
         .copy-toast {
             position: fixed;
@@ -236,36 +243,6 @@
             margin-top: 1.8rem;
             color: #b2959f;
         }
-        .install-banner {
-            display: none;
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(20px);
-            border-radius: 60px;
-            padding: 0.8rem 1.2rem;
-            color: white;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 1000;
-        }
-        .install-banner.show {
-            display: flex;
-        }
-        .install-btn {
-            background: white;
-            color: #b45f6b;
-            border: none;
-            padding: 6px 18px;
-            border-radius: 40px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        @media (max-width: 550px) {
-            .install-banner { flex-direction: column; text-align: center; gap: 8px; border-radius: 28px; }
-        }
     </style>
 </head>
 <body>
@@ -299,6 +276,9 @@
         <button class="btn btn-outline" id="refreshBtn">
             <i class="fas fa-arrows-rotate"></i> Другое
         </button>
+        <button class="btn btn-outline" id="notifyBtn">
+            <i class="fas fa-bell"></i> Вкл. уведомления
+        </button>
     </div>
 
     <div class="options">
@@ -318,10 +298,6 @@
 
 <div id="toastMsg" class="copy-toast">
     <i class="fas fa-check-circle"></i> <span>Скопировано!</span>
-</div>
-<div id="installBanner" class="install-banner">
-    <span><i class="fas fa-download"></i> Установите приложение</span>
-    <button id="installAppBtn" class="install-btn">Установить</button>
 </div>
 
 <script>
@@ -348,16 +324,15 @@
 
     let currentStyle = "cute";
     let currentGeneratedName = "";
-    let deferredPrompt = null;
+    let notificationsEnabled = false;
 
     const usernameSpan = document.getElementById("usernameDisplay");
     const generateBtn = document.getElementById("generateBtn");
     const refreshBtn = document.getElementById("refreshBtn");
     const copyBtn = document.getElementById("copyBtn");
+    const notifyBtn = document.getElementById("notifyBtn");
     const styleOptions = document.querySelectorAll(".style-option");
     const toast = document.getElementById("toastMsg");
-    const installBanner = document.getElementById("installBanner");
-    const installBtn = document.getElementById("installAppBtn");
 
     function showToast(message) {
         const toastSpan = toast.querySelector("span");
@@ -389,11 +364,33 @@
         return rawName;
     }
 
+    // Функция для отправки уведомления
+    function sendNotification(username, style) {
+        if (!notificationsEnabled || Notification.permission !== "granted") return;
+        
+        const styleNames = {
+            cute: "🌸 Милый",
+            edgy: "🌙 Дерзкий", 
+            tech: "⚡ Техно"
+        };
+        
+        new Notification("✨ Новое имя сгенерировано!", {
+            body: `${username}\nСтиль: ${styleNames[style]}`,
+            icon: "icon.png",
+            badge: "icon.png",
+            tag: "username-generation",
+            vibrate: [200, 100, 200]
+        });
+    }
+
     function updateName() {
         currentGeneratedName = generateUsername();
         usernameSpan.innerText = currentGeneratedName;
         usernameSpan.style.transform = "scale(0.98)";
         setTimeout(() => usernameSpan.style.transform = "scale(1)", 100);
+        
+        // Отправляем уведомление при генерации
+        sendNotification(currentGeneratedName, currentStyle);
     }
 
     async function copyToClipboard() {
@@ -420,28 +417,69 @@
         updateName();
     }
 
+    // Функция для обновления вида кнопки уведомлений
+    function updateNotifyButton(enabled) {
+        if (enabled) {
+            notifyBtn.innerHTML = '<i class="fas fa-bell-slash"></i> Выкл. уведомления';
+            notifyBtn.classList.add("btn-notify-active");
+        } else {
+            notifyBtn.innerHTML = '<i class="fas fa-bell"></i> Вкл. уведомления';
+            notifyBtn.classList.remove("btn-notify-active");
+        }
+    }
+
+    // Функция запроса разрешения на уведомления
+    async function requestNotificationPermission() {
+        if (!("Notification" in window)) {
+            showToast("❌ Ваш браузер не поддерживает уведомления");
+            return false;
+        }
+        
+        if (Notification.permission === "granted") {
+            notificationsEnabled = true;
+            updateNotifyButton(true);
+            showToast("🔔 Уведомления включены");
+            return true;
+        }
+        
+        if (Notification.permission !== "denied") {
+            const permission = await Notification.requestPermission();
+            if (permission === "granted") {
+                notificationsEnabled = true;
+                updateNotifyButton(true);
+                showToast("🔔 Уведомления включены");
+                return true;
+        }
+        }
+        
+        updateNotifyButton(false);
+        return false;
+    }
+
     generateBtn.addEventListener("click", updateName);
     refreshBtn.addEventListener("click", updateName);
     copyBtn.addEventListener("click", copyToClipboard);
+    
+    // Обработчик кнопки уведомлений
+    notifyBtn.addEventListener("click", () => {
+        if (notificationsEnabled) {
+            notificationsEnabled = false;
+            updateNotifyButton(false);
+            showToast("🔕 Уведомления выключены");
+        } else {
+            requestNotificationPermission();
+        }
+    });
     
     styleOptions.forEach(btn => {
         btn.addEventListener("click", () => setStyle(btn.dataset.style));
     });
 
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        installBanner.classList.add('show');
-    });
-
-    installBtn.addEventListener('click', async () => {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            await deferredPrompt.userChoice;
-            deferredPrompt = null;
-            installBanner.classList.remove('show');
-        }
-    });
+    // Проверяем статус разрешения при загрузке
+    if ("Notification" in window && Notification.permission === "granted") {
+        notificationsEnabled = true;
+        updateNotifyButton(true);
+    }
 
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js').then(reg => {
