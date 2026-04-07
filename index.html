@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>✨ Генератор имён пользователя | Стильный никнейм за секунду</title>
+    <title>✨ Генератор имён | Стильный никнейм за секунду</title>
     <!-- Google Fonts для эстетики и шрифта -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <!-- Font Awesome 6 (бесплатные иконки) -->
@@ -108,7 +108,6 @@
             font-weight: 700;
             letter-spacing: -0.3px;
             word-break: break-word;
-            color: #1e1e2a;
             background: linear-gradient(145deg, #2c2c36, #4b3b42);
             background-clip: text;
             -webkit-background-clip: text;
@@ -203,43 +202,47 @@
             transform: translateX(-50%) scale(1);
         }
 
-        /* стилизация опций */
+        /* стилизация опций — только стиль, без длины */
         .options {
             background: rgba(250, 245, 240, 0.6);
             border-radius: 36px;
-            padding: 1.2rem 1.2rem;
+            padding: 1.2rem 1.5rem;
             margin-top: 0.5rem;
+            text-align: center;
         }
-        .option-row {
+        .style-selector {
             display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
+            flex-direction: column;
             align-items: center;
-            gap: 1rem;
-            margin-bottom: 1rem;
+            gap: 0.8rem;
         }
         .option-label {
-            font-weight: 500;
+            font-weight: 600;
             color: #594e52;
-            font-size: 0.85rem;
-            display: flex;
+            font-size: 0.9rem;
+            display: inline-flex;
             align-items: center;
             gap: 8px;
+            background: rgba(255,240,235,0.7);
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
         }
         .style-buttons {
             display: flex;
             gap: 12px;
             background: #f0e9e4;
-            padding: 4px;
+            padding: 6px;
             border-radius: 100px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
         .style-option {
             background: transparent;
             border: none;
-            padding: 6px 18px;
+            padding: 8px 24px;
             border-radius: 40px;
             font-weight: 500;
-            font-size: 0.8rem;
+            font-size: 0.9rem;
             cursor: pointer;
             transition: 0.2s;
             font-family: 'Inter', sans-serif;
@@ -247,45 +250,9 @@
         }
         .style-option.active {
             background: white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
             color: #b25268;
-            font-weight: 600;
-        }
-        .length-control {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: #f0e9e4;
-            padding: 5px 12px;
-            border-radius: 80px;
-        }
-        .length-value {
             font-weight: 700;
-            min-width: 35px;
-            text-align: center;
-            color: #392e32;
-        }
-        .length-btn {
-            background: white;
-            border: none;
-            width: 28px;
-            height: 28px;
-            border-radius: 30px;
-            font-weight: bold;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: 0.1s;
-            color: #b4697c;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .length-btn:active {
-            transform: scale(0.94);
-        }
-        hr {
-            margin: 1rem 0;
-            border: none;
-            height: 1px;
-            background: rgba(0,0,0,0.05);
         }
         .footer-info {
             text-align: center;
@@ -332,24 +299,16 @@
     </div>
 
     <div class="options">
-        <div class="option-row">
-            <span class="option-label"><i class="fas fa-palette"></i> Стиль ника</span>
+        <div class="style-selector">
+            <span class="option-label"><i class="fas fa-palette"></i> Выберите стиль ника</span>
             <div class="style-buttons" id="styleGroup">
                 <button data-style="cute" class="style-option active">🌸 Милый</button>
-                <button data-style="edgy" class="style-option">🌙 Дерзкий</button>
-                <button data-style="tech" class="style-option">⚡ Техно</button>
-            </div>
-        </div>
-        <div class="option-row">
-            <span class="option-label"><i class="fas fa-ruler-combined"></i> Длина (символов)</span>
-            <div class="length-control">
-                <button class="length-btn" id="decLength">−</button>
-                <span class="length-value" id="lengthValue">8-14</span>
-                <button class="length-btn" id="incLength">+</button>
+                <button data-style="edgy" class="style-option">🌙 Загадочный</button>
+                <button data-style="tech" class="style-option">⚡ Броский</button>
             </div>
         </div>
         <div class="footer-info">
-            <i class="fas fa-shield-alt"></i> от 6 до 20 символов • меняйте стиль и длину
+            <i class="fas fa-shield-alt"></i> тысячи уникальных комбинаций • меняйте стиль для нового настроения
         </div>
     </div>
 </div>
@@ -361,41 +320,36 @@
 <script>
     (function(){
         // ---------- БОЛЬШАЯ БИБЛИОТЕКА СЛОВ ДЛЯ ГЕНЕРАЦИИ ----------
-        // Стили: милый, дерзкий, техно
+        // Три стиля: милый, дерзкий, техно
         const dictionaries = {
             cute: {
-                prefixes: ["luna", "bunny", "cookie", "puff", "peach", "sunny", "honey", "dream", "star", "fairy", "twinkle", "berry", "velvet", "sugar", "glitter", "petal", "mochi", "bubbles", "choco", "vanilla"],
-                suffixes: ["paw", "wink", "smile", "glow", "bloom", "fluff", "sparkle", "heart", "kiss", "dew", "mellow", "bun", "cake", "puff", "pop", "dolly", "pie", "bean", "snuggle", "sweet"],
+                prefixes: ["luna", "bunny", "cookie", "puff", "peach", "sunny", "honey", "dream", "star", "fairy", "twinkle", "berry", "velvet", "sugar", "glitter", "petal", "mochi", "bubbles", "choco", "vanilla", "mellow", "blossom", "cotton", "sprinkle", "cupcake"],
+                suffixes: ["paw", "wink", "smile", "glow", "bloom", "fluff", "sparkle", "heart", "kiss", "dew", "mellow", "bun", "cake", "puff", "pop", "dolly", "pie", "bean", "snuggle", "sweet", "cloud", "muffin", "biscuit", "hug", "joy"],
                 connectors: ["_", ".", ""],
-                numbers: ["", "1", "2", "3", "7", "99", "x", "o"]
+                numbers: ["", "1", "2", "3", "7", "99", "x", "o", "4", "8"]
             },
             edgy: {
-                prefixes: ["shadow", "void", "raven", "crimson", "phantom", "night", "fury", "wicked", "storm", "chaos", "vengeance", "silent", "obsidian", "nox", "inferno", "reaper", "hollow", "dark", "ashen", "frost"],
-                suffixes: ["bane", "fang", "claw", "wrath", "shade", "ghost", "hunter", "rebel", "knight", "eclipse", "havoc", "rune", "doom", "sorrow", "zero", "edge", "soul", "crypt", "vex", "slayer"],
+                prefixes: ["shadow", "void", "raven", "crimson", "phantom", "night", "fury", "wicked", "storm", "chaos", "vengeance", "silent", "obsidian", "nox", "inferno", "reaper", "hollow", "dark", "ashen", "frost", "midnight", "vengeful", "fallen", "cursed", "wicked"],
+                suffixes: ["bane", "fang", "claw", "wrath", "shade", "ghost", "hunter", "rebel", "knight", "eclipse", "havoc", "rune", "doom", "sorrow", "zero", "edge", "soul", "crypt", "vex", "slayer", "mancer", "reaver", "spite", "gloom", "hex"],
                 connectors: ["_", "-", ""],
-                numbers: ["", "x", "z", "47", "13", "00", "666"]
+                numbers: ["", "x", "z", "47", "13", "00", "666", "7", "99", "0x"]
             },
             tech: {
-                prefixes: ["cyber", "pixel", "data", "nexus", "vector", "codex", "bit", "neon", "quantum", "alpha", "beta", "zero", "sync", "echo", "poly", "grid", "logic", "crypto", "fiber", "meta"],
-                suffixes: ["wave", "core", "drive", "link", "node", "script", "frame", "loop", "sys", "craft", "ware", "net", "flux", "byte", "radix", "shell", "stack", "hash", "token", "array"],
+                prefixes: ["cyber", "pixel", "data", "nexus", "vector", "codex", "bit", "neon", "quantum", "alpha", "beta", "zero", "sync", "echo", "poly", "grid", "logic", "crypto", "fiber", "meta", "nano", "digital", "hyper", "byte", "axon"],
+                suffixes: ["wave", "core", "drive", "link", "node", "script", "frame", "loop", "sys", "craft", "ware", "net", "flux", "byte", "radix", "shell", "stack", "hash", "token", "array", "code", "ping", "packet", "proxy", "cache"],
                 connectors: ["_", ".", ""],
-                numbers: ["", "01", "42", "404", "0x", "7", "99"]
+                numbers: ["", "01", "42", "404", "0x", "7", "99", "2k", "10", "808"]
             }
         };
 
         // текущее состояние
         let currentStyle = "cute";     // cute, edgy, tech
-        let minLength = 8;
-        let maxLength = 14;
         
         // элементы DOM
         const usernameSpan = document.getElementById("usernameDisplay");
         const generateBtn = document.getElementById("generateBtn");
         const refreshBtn = document.getElementById("refreshBtn");
         const copyBtn = document.getElementById("copyBtn");
-        const lengthValueSpan = document.getElementById("lengthValue");
-        const decLengthBtn = document.getElementById("decLength");
-        const incLengthBtn = document.getElementById("incLength");
         const styleOptions = document.querySelectorAll(".style-option");
         const toast = document.getElementById("toastMsg");
 
@@ -409,112 +363,52 @@
             }, 1800);
         }
 
-        // обновить отображение длины в UI
-        function updateLengthDisplay() {
-            if(minLength === maxLength) {
-                lengthValueSpan.innerText = `${minLength}`;
-            } else {
-                lengthValueSpan.innerText = `${minLength}-${maxLength}`;
-            }
-        }
-
-        // изменить диапазон длины
-        function changeLength(deltaMin, deltaMax) {
-            let newMin = minLength + deltaMin;
-            let newMax = maxLength + deltaMax;
-            // ограничения: от 4 до 24 символов, но минимальная длина не больше максимальной
-            newMin = Math.min(20, Math.max(5, newMin));
-            newMax = Math.min(24, Math.max(6, newMax));
-            if(newMin > newMax) {
-                if(deltaMin > 0) newMax = newMin;
-                else newMin = newMax;
-            }
-            minLength = newMin;
-            maxLength = newMax;
-            updateLengthDisplay();
-        }
-
-        // Генерация случайного элемента из массива
-        function randomItem(arr) {
-            return arr[Math.floor(Math.random() * arr.length)];
-        }
-
-        // Основная функция генерации имени с учётом стиля и ограничений по длине
+        // Генерация имени без ограничений по длине (но естественная длина от 6 до 18)
         function generateUsername() {
             const dict = dictionaries[currentStyle];
-            if(!dict) return "user_name";
+            if(!dict) return "cool_user";
             
-            let attempts = 0;
-            const maxAttempts = 18;
-            let bestName = "";
-            let bestDiff = Infinity;
-
-            while(attempts < maxAttempts) {
-                let prefix = randomItem(dict.prefixes);
-                let suffix = randomItem(dict.suffixes);
-                let connector = randomItem(dict.connectors);
+            // Случайно выбираем, использовать ли число (вероятность 35%)
+            const useNumber = Math.random() < 0.35;
+            let prefix = randomItem(dict.prefixes);
+            let suffix = randomItem(dict.suffixes);
+            let connector = randomItem(dict.connectors);
+            
+            let rawName = prefix + connector + suffix;
+            
+            if(useNumber) {
                 let numPart = randomItem(dict.numbers);
-                
-                let rawName = prefix + connector + suffix;
-                // добавить число в конец (не всегда, с вероятностью 45% если число не пустое)
-                if(numPart !== "" && Math.random() < 0.45) {
+                if(numPart !== "") {
                     rawName = rawName + numPart;
-                } else if (numPart === "" && Math.random() < 0.2) {
-                    // иногда добавим маленькое число из доступного диапазона
-                    let fallbackNum = Math.floor(Math.random() * 99);
+                } else {
+                    // добавим случайное число от 1 до 99
+                    let fallbackNum = Math.floor(Math.random() * 99) + 1;
                     rawName = rawName + fallbackNum;
                 }
-                
-                // иногда если длина слишком мала, добавим маленькую цифру или ещё слово? но проще регенерировать
-                let len = rawName.length;
-                if(len >= minLength && len <= maxLength) {
-                    // идеальное совпадение
-                    return rawName;
-                }
-                
-                // если длина близка к допустимой, запомним как fallback
-                let diff = 0;
-                if(len < minLength) diff = minLength - len;
-                else diff = len - maxLength;
-                if(diff < bestDiff) {
-                    bestDiff = diff;
-                    bestName = rawName;
-                }
-                attempts++;
             }
             
-            // если после попыток не нашли идеального, используем лучший или модифицируем под длину
-            if(bestName && bestName.length > 0) {
-                // если имя слишком короткое, добавляем случайное число в конец (но чтобы не слишком длинным)
-                if(bestName.length < minLength) {
-                    let need = minLength - bestName.length;
-                    if(need <= 3) {
-                        let addNum = Math.floor(Math.random() * Math.pow(10, need));
-                        bestName = bestName + addNum;
-                    } else {
-                        // слишком много, просто добавим пару символов
-                        bestName = bestName + Math.floor(Math.random() * 99);
-                    }
-                }
-                // если слишком длинное — обрежем аккуратно
-                if(bestName.length > maxLength) {
-                    bestName = bestName.slice(0, maxLength);
-                    // убедимся что последний символ не подчеркивание-разделитель если он висячий
-                    if(bestName.endsWith("_") || bestName.endsWith("-") || bestName.endsWith(".")) {
-                        bestName = bestName.slice(0, -1);
-                    }
-                }
-                return bestName;
+            // иногда (редко) добавляем дополнительный символ для вариативности
+            if(Math.random() < 0.12 && rawName.length < 20) {
+                const extraSymbols = ["_", ".", "-"];
+                let sym = randomItem(extraSymbols);
+                let extraNum = Math.floor(Math.random() * 10);
+                rawName = rawName + sym + extraNum;
             }
             
-            // супер fallback (уникальный на основе времени)
-            const fallbackDict = dictionaries[currentStyle];
-            const fallPre = randomItem(fallbackDict.prefixes);
-            const fallSuf = randomItem(fallbackDict.suffixes);
-            let fallbackName = fallPre + fallSuf;
-            if(fallbackName.length < minLength) fallbackName = fallbackName + Math.floor(Math.random() * 100);
-            if(fallbackName.length > maxLength) fallbackName = fallbackName.slice(0, maxLength);
-            return fallbackName;
+            // защита от слишком длинных имён (максимум 20 символов, но это не жёстко)
+            if(rawName.length > 22) {
+                rawName = rawName.slice(0, 20);
+                // убираем висячий разделитель в конце, если есть
+                if(rawName.endsWith("_") || rawName.endsWith("-") || rawName.endsWith(".")) {
+                    rawName = rawName.slice(0, -1);
+                }
+            }
+            
+            return rawName;
+        }
+        
+        function randomItem(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
         }
 
         // Обновить имя на экране
@@ -524,13 +418,13 @@
             const newName = generateUsername();
             currentGeneratedName = newName;
             usernameSpan.innerText = newName;
-            // небольшая анимация? плавность
+            // небольшая анимация
             usernameSpan.style.transform = "scale(0.98)";
             setTimeout(() => { if(usernameSpan) usernameSpan.style.transform = "scale(1)"; }, 100);
             return newName;
         }
 
-        // копирование
+        // копирование в буфер обмена
         async function copyToClipboard() {
             if(!currentGeneratedName || currentGeneratedName.trim() === "") {
                 currentGeneratedName = usernameSpan.innerText;
@@ -539,7 +433,7 @@
                 await navigator.clipboard.writeText(currentGeneratedName);
                 showToast(`📋 "${currentGeneratedName}" скопировано!`);
             } catch(err) {
-                // fallback
+                // fallback для старых браузеров
                 const textarea = document.createElement("textarea");
                 textarea.value = currentGeneratedName;
                 document.body.appendChild(textarea);
@@ -567,33 +461,11 @@
             updateNameAndStore();
         }
 
-        // обработка длины через кнопки
-        function handleLengthChange(type) {
-            if(type === "inc") {
-                // увеличиваем диапазон: поднимаем max на 1, если можно, иначе min
-                if(maxLength < 22) {
-                    changeLength(0, 1);
-                } else if(minLength < 22) {
-                    changeLength(1, 0);
-                }
-            } else if(type === "dec") {
-                if(minLength > 6) {
-                    changeLength(-1, 0);
-                } else if(maxLength > minLength && maxLength > 6) {
-                    changeLength(0, -1);
-                }
-            }
-            updateNameAndStore();
-        }
-
         // инициализация обработчиков событий
         function bindEvents() {
             generateBtn.addEventListener("click", () => updateNameAndStore());
             refreshBtn.addEventListener("click", () => updateNameAndStore());
             copyBtn.addEventListener("click", copyToClipboard);
-            
-            decLengthBtn.addEventListener("click", () => handleLengthChange("dec"));
-            incLengthBtn.addEventListener("click", () => handleLengthChange("inc"));
             
             styleOptions.forEach(btn => {
                 btn.addEventListener("click", (e) => {
@@ -606,10 +478,6 @@
         // при загрузке страницы сгенерировать первое имя
         function init() {
             bindEvents();
-            // установка начальных параметров: мин/макс длина 8-14
-            minLength = 8;
-            maxLength = 14;
-            updateLengthDisplay();
             currentStyle = "cute";
             styleOptions.forEach(btn => {
                 if(btn.getAttribute("data-style") === "cute") btn.classList.add("active");
