@@ -1,0 +1,23 @@
+{
+  "name": "Генератор имён пользователя",
+  "short_name": "NameGen",
+  "description": "Красивый генератор уникальных имён с выбором стиля",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#f9f2e7",
+  "background_color": "#f9f2e7",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
