@@ -1,93 +1,544 @@
-// Service Worker для push уведомлений
-const CACHE_NAME = 'username-gen-v4';
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#f9f2e7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NameGen">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.png">
+    <title>✨ Генератор имён | PWA с уведомлениями</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-self.addEventListener('install', event => {
-    self.skipWaiting();
-    event.waitUntil(
-        caches.open(CACHE_NAME).then(cache => {
-            return cache.addAll([
-                './',
-                './index.html',
-                './manifest.json',
-                './icon.png'
-            ]);
-        })
-    );
-});
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(145deg, #f9f2e7 0%, #ffe6f0 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            position: relative;
+            overflow-x: hidden;
+        }
 
-self.addEventListener('fetch', event => {
-    event.respondWith(
-        caches.match(event.request).then(response => {
-            return response || fetch(event.request);
-        })
-    );
-});
+        .blob {
+            position: fixed;
+            width: 50vw;
+            height: 50vw;
+            background: radial-gradient(circle, rgba(255,190,200,0.4) 0%, rgba(210,160,255,0.2) 100%);
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: 0;
+            pointer-events: none;
+        }
+        .blob-1 { top: -20vh; left: -10vw; }
+        .blob-2 { bottom: -30vh; right: -15vw; }
 
-// Обработка push-сообщений с сервера
-self.addEventListener('push', event => {
-    let data = {
-        title: '✨ Новое имя!',
-        body: 'Сгенерировано новое имя',
-        icon: 'icon.png',
-        tag: 'username'
+        .card {
+            position: relative;
+            z-index: 10;
+            max-width: 650px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border-radius: 48px;
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.25);
+            padding: 2rem;
+            border: 1px solid rgba(255,255,245,0.7);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255,255,240,0.7);
+            padding: 0.4rem 1rem;
+            border-radius: 100px;
+            font-size: 0.8rem;
+            color: #b45f6b;
+            margin-bottom: 1rem;
+        }
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #2D2F36, #8B5F6C);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        .sub {
+            color: #6f5b62;
+            margin-top: 0.6rem;
+        }
+
+        .name-display {
+            background: white;
+            border-radius: 44px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 1.8rem;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+        }
+        .generated-name {
+            font-size: 2.5rem;
+            font-weight: 700;
+            word-break: break-word;
+            background: linear-gradient(145deg, #2c2c36, #4b3b42);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        @media (max-width: 500px) {
+            .generated-name { font-size: 1.9rem; }
+            .card { padding: 1.5rem; }
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+        .btn {
+            border: none;
+            background: rgba(245, 240, 235, 0.9);
+            padding: 0.8rem 1.6rem;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #3d2e33;
+        }
+        .btn-primary {
+            background: linear-gradient(105deg, #fdc8d4, #ffb7c5);
+            box-shadow: 0 6px 14px rgba(255, 150, 170, 0.3);
+        }
+        .btn-primary:hover {
+            transform: translateY(-3px);
+        }
+        .btn-notify-active {
+            background: linear-gradient(105deg, #a8e6cf, #d4edda);
+            color: #2d5a3b;
+        }
+
+        .copy-toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) scale(0.9);
+            background: #2c2a2eef;
+            backdrop-filter: blur(12px);
+            color: white;
+            padding: 0.7rem 1.6rem;
+            border-radius: 60px;
+            opacity: 0;
+            transition: 0.2s;
+            pointer-events: none;
+            z-index: 200;
+        }
+        .copy-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) scale(1);
+        }
+
+        .options {
+            background: rgba(250, 245, 240, 0.6);
+            border-radius: 36px;
+            padding: 1.2rem;
+            text-align: center;
+        }
+        .style-buttons {
+            display: flex;
+            gap: 12px;
+            background: #f0e9e4;
+            padding: 6px;
+            border-radius: 100px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 0.8rem;
+        }
+        .style-option {
+            background: transparent;
+            border: none;
+            padding: 8px 24px;
+            border-radius: 40px;
+            font-weight: 500;
+            cursor: pointer;
+            color: #5e4b51;
+        }
+        .style-option.active {
+            background: white;
+            color: #b25268;
+            font-weight: 700;
+        }
+        .footer-info {
+            text-align: center;
+            font-size: 0.7rem;
+            margin-top: 1.5rem;
+            color: #b2959f;
+        }
+        .status {
+            text-align: center;
+            font-size: 0.75rem;
+            margin-top: 1rem;
+            padding: 0.5rem;
+            border-radius: 20px;
+            background: rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+
+<div class="card">
+    <div class="header">
+        <div class="badge">
+            <i class="fas fa-bell"></i> <span>Push уведомления</span>
+        </div>
+        <h1>✨ Генератор ника</h1>
+        <div class="sub">Уникальные имена с push-уведомлениями</div>
+    </div>
+
+    <div class="name-display">
+        <div class="generated-name" id="usernameDisplay">загрузка...</div>
+    </div>
+
+    <div class="action-buttons">
+        <button class="btn btn-primary" id="generateBtn">
+            <i class="fas fa-dice-d6"></i> Случайное имя
+        </button>
+        <button class="btn" id="copyBtn">
+            <i class="far fa-copy"></i> Копировать
+        </button>
+        <button class="btn" id="notifyBtn">
+            <i class="fas fa-bell"></i> Вкл. уведомления
+        </button>
+    </div>
+
+    <div class="options">
+        <span><i class="fas fa-palette"></i> Стиль ника:</span>
+        <div class="style-buttons" id="styleGroup">
+            <button data-style="cute" class="style-option active">🌸 Милый</button>
+            <button data-style="edgy" class="style-option">🌙 Дерзкий</button>
+            <button data-style="tech" class="style-option">⚡ Техно</button>
+        </div>
+        <div class="status" id="statusMsg">
+            <i class="fas fa-info-circle"></i> Нажмите "Вкл. уведомления"
+        </div>
+        <div class="footer-info">
+            <i class="fas fa-shield-alt"></i> Уведомления приходят даже при закрытом приложении
+        </div>
+    </div>
+</div>
+
+<div id="toastMsg" class="copy-toast">
+    <i class="fas fa-check-circle"></i> <span>Скопировано!</span>
+</div>
+
+<script>
+    // ========== СЛОВАРИ ДЛЯ ГЕНЕРАЦИИ ==========
+    const dictionaries = {
+        cute: {
+            prefixes: ["luna", "bunny", "cookie", "peach", "sunny", "honey", "dream", "star", "fairy", "twinkle", "berry", "velvet", "sugar", "glitter", "petal", "mochi", "bubbles", "choco", "vanilla", "blossom", "cotton", "cupcake"],
+            suffixes: ["paw", "wink", "smile", "glow", "bloom", "fluff", "sparkle", "heart", "kiss", "dew", "bun", "cake", "puff", "pop", "dolly", "pie", "bean", "snuggle", "sweet", "cloud", "muffin", "hug", "joy"],
+            connectors: ["_", ".", ""],
+            numbers: ["", "1", "2", "3", "7", "99", "x", "o", "4", "8"]
+        },
+        edgy: {
+            prefixes: ["shadow", "void", "raven", "crimson", "phantom", "night", "fury", "wicked", "storm", "chaos", "vengeance", "silent", "obsidian", "nox", "inferno", "reaper", "hollow", "dark", "ashen", "frost", "midnight", "fallen", "cursed"],
+            suffixes: ["bane", "fang", "claw", "wrath", "shade", "ghost", "hunter", "rebel", "knight", "eclipse", "havoc", "rune", "doom", "sorrow", "zero", "edge", "soul", "crypt", "vex", "slayer", "reaver", "spite", "hex"],
+            connectors: ["_", "-", ""],
+            numbers: ["", "x", "z", "47", "13", "00", "666", "7", "99", "0x"]
+        },
+        tech: {
+            prefixes: ["cyber", "pixel", "data", "nexus", "vector", "codex", "bit", "neon", "quantum", "alpha", "beta", "zero", "sync", "echo", "poly", "grid", "logic", "crypto", "fiber", "meta", "nano", "digital", "hyper", "byte", "axon"],
+            suffixes: ["wave", "core", "drive", "link", "node", "script", "frame", "loop", "sys", "craft", "ware", "net", "flux", "byte", "radix", "shell", "stack", "hash", "token", "array", "code", "ping", "packet", "cache"],
+            connectors: ["_", ".", ""],
+            numbers: ["", "01", "42", "404", "0x", "7", "99", "2k", "10", "808"]
+        }
     };
+
+    // ========== ПЕРЕМЕННЫЕ ==========
+    let currentStyle = "cute";
+    let currentGeneratedName = "";
+    let swRegistration = null;
+    let isSubscribed = false;
     
-    if (event.data) {
+    // VAPID ключ (публичный) - для тестов используем demo ключ
+    // Для продакшена нужно сгенерировать свои ключи на https://web-push-codelab.glitch.me/
+    const applicationServerPublicKey = 'BPzXrJvqMk2XqYqXqYqXqYqXqYqXqYqXqYqXqYqXqYqXqYqXqYqXqYqXqYqXqYqXqYqXqYqXqYqXqY';
+    
+    // ========== DOM ЭЛЕМЕНТЫ ==========
+    const usernameSpan = document.getElementById("usernameDisplay");
+    const generateBtn = document.getElementById("generateBtn");
+    const copyBtn = document.getElementById("copyBtn");
+    const notifyBtn = document.getElementById("notifyBtn");
+    const styleOptions = document.querySelectorAll(".style-option");
+    const toast = document.getElementById("toastMsg");
+    const statusMsg = document.getElementById("statusMsg");
+    
+    // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
+    function showToast(message) {
+        const toastSpan = toast.querySelector("span");
+        toastSpan.innerText = message;
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 2000);
+    }
+    
+    function updateStatus(text, isError = false) {
+        statusMsg.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-info-circle'}"></i> ${text}`;
+        statusMsg.style.color = isError ? '#c62828' : '#6f5b62';
+    }
+    
+    function randomItem(arr) {
+        return arr[Math.floor(Math.random() * arr.length)];
+    }
+    
+    function generateUsername() {
+        const dict = dictionaries[currentStyle];
+        const useNumber = Math.random() < 0.35;
+        let prefix = randomItem(dict.prefixes);
+        let suffix = randomItem(dict.suffixes);
+        let connector = randomItem(dict.connectors);
+        
+        let rawName = prefix + connector + suffix;
+        
+        if(useNumber) {
+            let numPart = randomItem(dict.numbers);
+            if(numPart !== "") rawName = rawName + numPart;
+            else rawName = rawName + (Math.floor(Math.random() * 99) + 1);
+        }
+        
+        if(rawName.length > 22) rawName = rawName.slice(0, 20);
+        return rawName;
+    }
+    
+    function updateName() {
+        currentGeneratedName = generateUsername();
+        usernameSpan.innerText = currentGeneratedName;
+        usernameSpan.style.transform = "scale(0.98)";
+        setTimeout(() => usernameSpan.style.transform = "scale(1)", 100);
+        
+        // Отправляем push-уведомление через сервис воркер
+        sendPushNotification();
+    }
+    
+    async function copyToClipboard() {
         try {
-            data = event.data.json();
-        } catch (e) {
-            data.body = event.data.text();
+            await navigator.clipboard.writeText(currentGeneratedName);
+            showToast(`📋 "${currentGeneratedName}" скопировано!`);
+        } catch(err) {
+            const textarea = document.createElement("textarea");
+            textarea.value = currentGeneratedName;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand("copy");
+            document.body.removeChild(textarea);
+            showToast(`✔️ Скопировано: ${currentGeneratedName}`);
         }
     }
     
-    const options = {
-        body: data.body,
-        icon: data.icon || 'icon.png',
-        badge: 'icon.png',
-        vibrate: [200, 100, 200],
-        tag: data.tag || 'username',
-        requireInteraction: false,
-        data: {
-            url: '/'
-        }
-    };
-    
-    event.waitUntil(
-        self.registration.showNotification(data.title, options)
-    );
-});
-
-// Обработка сообщений от клиента (для тестовых уведомлений)
-self.addEventListener('message', event => {
-    if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
-        const payload = event.data.payload;
-        self.registration.showNotification(payload.title, {
-            body: payload.body,
-            icon: payload.icon || 'icon.png',
-            badge: 'icon.png',
-            vibrate: [200, 100, 200],
-            tag: payload.tag || 'username'
+    function setStyle(style) {
+        currentStyle = style;
+        styleOptions.forEach(btn => {
+            if(btn.dataset.style === style) btn.classList.add("active");
+            else btn.classList.remove("active");
         });
+        updateName();
     }
-});
-
-// Клик по уведомлению
-self.addEventListener('notificationclick', event => {
-    event.notification.close();
     
-    event.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true })
-            .then(windowClients => {
-                // Если есть открытое окно, фокусируем его
-                for (let client of windowClients) {
-                    if (client.url === '/' && 'focus' in client) {
-                        return client.focus();
-                    }
+    // ========== PUSH УВЕДОМЛЕНИЯ ==========
+    function updateNotifyButton() {
+        if (isSubscribed) {
+            notifyBtn.innerHTML = '<i class="fas fa-bell-slash"></i> Выкл. уведомления';
+            notifyBtn.classList.add("btn-notify-active");
+        } else {
+            notifyBtn.innerHTML = '<i class="fas fa-bell"></i> Вкл. уведомления';
+            notifyBtn.classList.remove("btn-notify-active");
+        }
+    }
+    
+    function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+    }
+    
+    async function subscribeUser() {
+        if (!swRegistration) {
+            updateStatus("Service Worker не зарегистрирован", true);
+            return false;
+        }
+        
+        try {
+            const subscribeOptions = {
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(applicationServerPublicKey)
+            };
+            
+            const pushSubscription = await swRegistration.pushManager.subscribe(subscribeOptions);
+            
+            // Сохраняем подписку в localStorage
+            localStorage.setItem('pushSubscription', JSON.stringify(pushSubscription));
+            isSubscribed = true;
+            updateNotifyButton();
+            updateStatus("✅ Уведомления включены! При каждом новом имени будет приходить push");
+            
+            // Отправляем подписку на сервер (здесь можно добавить отправку на ваш бекенд)
+            console.log('Push Subscription:', pushSubscription);
+            
+            return true;
+        } catch (error) {
+            console.error('Ошибка подписки:', error);
+            updateStatus("❌ Ошибка: " + error.message, true);
+            return false;
+        }
+    }
+    
+    async function unsubscribeUser() {
+        if (!swRegistration) return false;
+        
+        const pushSubscription = await swRegistration.pushManager.getSubscription();
+        if (pushSubscription) {
+            await pushSubscription.unsubscribe();
+            localStorage.removeItem('pushSubscription');
+            isSubscribed = false;
+            updateNotifyButton();
+            updateStatus("🔕 Уведомления выключены");
+            return true;
+        }
+        return false;
+    }
+    
+    async function sendPushNotification() {
+        if (!isSubscribed || !swRegistration) return;
+        
+        const pushSubscription = await swRegistration.pushManager.getSubscription();
+        if (!pushSubscription) return;
+        
+        // Отправляем уведомление через Service Worker
+        if (swRegistration.active) {
+            swRegistration.active.postMessage({
+                type: 'SHOW_NOTIFICATION',
+                payload: {
+                    title: '✨ Новое имя!',
+                    body: `${currentGeneratedName} (${getStyleName()})`,
+                    icon: 'icon.png',
+                    tag: 'username'
                 }
-                // Иначе открываем новое
-                if (clients.openWindow) {
-                    return clients.openWindow('/');
+            });
+        }
+    }
+    
+    function getStyleName() {
+        const names = { cute: "Милый", edgy: "Дерзкий", tech: "Техно" };
+        return names[currentStyle];
+    }
+    
+    async function initializePush() {
+        if (!('Notification' in window)) {
+            updateStatus("❌ Браузер не поддерживает уведомления", true);
+            return;
+        }
+        
+        if (!('PushManager' in window)) {
+            updateStatus("❌ PushManager не поддерживается", true);
+            return;
+        }
+        
+        // Проверяем HTTPS
+        if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+            updateStatus("⚠️ Для уведомлений нужен HTTPS. Выложите сайт на хостинг", true);
+            return;
+        }
+        
+        // Регистрируем Service Worker
+        try {
+            swRegistration = await navigator.serviceWorker.register('sw.js');
+            console.log('Service Worker зарегистрирован');
+            
+            // Проверяем существующую подписку
+            const subscription = await swRegistration.pushManager.getSubscription();
+            isSubscribed = subscription !== null;
+            updateNotifyButton();
+            
+            if (isSubscribed) {
+                updateStatus("✅ Уведомления включены");
+            } else {
+                updateStatus("🔔 Нажмите «Вкл. уведомления» для получения push");
+            }
+        } catch (error) {
+            console.error('Service Worker ошибка:', error);
+            updateStatus("❌ Ошибка Service Worker", true);
+        }
+    }
+    
+    // ========== ОБРАБОТЧИКИ СОБЫТИЙ ==========
+    generateBtn.addEventListener("click", updateName);
+    copyBtn.addEventListener("click", copyToClipboard);
+    
+    notifyBtn.addEventListener("click", async () => {
+        if (isSubscribed) {
+            await unsubscribeUser();
+        } else {
+            // Запрашиваем разрешение на уведомления
+            if (Notification.permission === 'denied') {
+                updateStatus("❌ Уведомления запрещены. Разрешите в настройках браузера", true);
+                return;
+            }
+            
+            if (Notification.permission !== 'granted') {
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    updateStatus("❌ Нужно разрешить уведомления", true);
+                    return;
                 }
-            })
-    );
-});
+            }
+            
+            await subscribeUser();
+        }
+    });
+    
+    styleOptions.forEach(btn => {
+        btn.addEventListener("click", () => setStyle(btn.dataset.style));
+    });
+    
+    // ========== ЗАПУСК ==========
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            initializePush();
+        });
+    } else {
+        updateStatus("❌ Service Worker не поддерживается", true);
+    }
+    
+    updateName();
+</script>
+</body>
+</html>
