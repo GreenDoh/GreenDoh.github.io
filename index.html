@@ -9,8 +9,10 @@
     <meta name="apple-mobile-web-app-title" content="NameGen">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.png">
-    <title>✨ Генератор имён | PWA с уведомлениями</title>
+    <title>✨ Генератор имён | PWA приложение</title>
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * {
@@ -42,7 +44,7 @@
             pointer-events: none;
         }
         .blob-1 { top: -20vh; left: -10vw; }
-        .blob-2 { bottom: -30vh; right: -15vw; }
+        .blob-2 { bottom: -30vh; right: -15vw; background: radial-gradient(circle, rgba(170,210,255,0.4), rgba(255,220,180,0.2)); }
 
         .card {
             position: relative;
@@ -52,8 +54,9 @@
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(12px);
             border-radius: 48px;
-            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.25);
-            padding: 2rem;
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255,255,240,0.6);
+            padding: 2rem 2rem 2.5rem;
+            transition: all 0.2s ease;
             border: 1px solid rgba(255,255,245,0.7);
         }
 
@@ -66,10 +69,13 @@
             align-items: center;
             gap: 0.5rem;
             background: rgba(255,255,240,0.7);
+            backdrop-filter: blur(4px);
             padding: 0.4rem 1rem;
             border-radius: 100px;
             font-size: 0.8rem;
+            font-weight: 500;
             color: #b45f6b;
+            border: 1px solid rgba(255,200,180,0.6);
             margin-bottom: 1rem;
         }
         h1 {
@@ -79,32 +85,47 @@
             background-clip: text;
             -webkit-background-clip: text;
             color: transparent;
+            letter-spacing: -0.01em;
         }
         .sub {
             color: #6f5b62;
             margin-top: 0.6rem;
+            font-weight: 400;
+            font-size: 0.95rem;
         }
 
         .name-display {
             background: white;
             border-radius: 44px;
-            padding: 2rem;
+            padding: 2rem 1rem;
             text-align: center;
             margin-bottom: 1.8rem;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255,255,255,0.8);
+            border: 1px solid #fff6f0;
         }
         .generated-name {
             font-size: 2.5rem;
             font-weight: 700;
+            letter-spacing: -0.3px;
             word-break: break-word;
             background: linear-gradient(145deg, #2c2c36, #4b3b42);
             background-clip: text;
             -webkit-background-clip: text;
             color: transparent;
+            text-shadow: 0 1px 0 rgba(255,255,255,0.5);
         }
         @media (max-width: 500px) {
             .generated-name { font-size: 1.9rem; }
             .card { padding: 1.5rem; }
+        }
+        .name-hint {
+            font-size: 0.75rem;
+            color: #a48a8f;
+            margin-top: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .action-buttons {
@@ -119,6 +140,7 @@
             background: rgba(245, 240, 235, 0.9);
             padding: 0.8rem 1.6rem;
             border-radius: 60px;
+            font-family: 'Inter', sans-serif;
             font-weight: 600;
             font-size: 0.95rem;
             display: inline-flex;
@@ -126,18 +148,26 @@
             gap: 10px;
             cursor: pointer;
             transition: 0.2s;
+            backdrop-filter: blur(5px);
             color: #3d2e33;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border: 1px solid rgba(255,250,240,0.8);
         }
         .btn-primary {
             background: linear-gradient(105deg, #fdc8d4, #ffb7c5);
+            color: #2d2326;
             box-shadow: 0 6px 14px rgba(255, 150, 170, 0.3);
+            border: none;
         }
         .btn-primary:hover {
             transform: translateY(-3px);
+            background: linear-gradient(105deg, #ffc1cf, #ffaaba);
+            box-shadow: 0 12px 20px rgba(255, 130, 150, 0.35);
         }
-        .btn-notify-active {
-            background: linear-gradient(105deg, #a8e6cf, #d4edda);
-            color: #2d5a3b;
+        .btn-outline:hover {
+            background: rgba(255, 245, 240, 0.95);
+            transform: translateY(-2px);
+            border-color: #ffbfb0;
         }
 
         .copy-toast {
@@ -150,10 +180,15 @@
             color: white;
             padding: 0.7rem 1.6rem;
             border-radius: 60px;
-            opacity: 0;
-            transition: 0.2s;
-            pointer-events: none;
+            font-weight: 500;
+            font-size: 0.85rem;
             z-index: 200;
+            opacity: 0;
+            transition: opacity 0.2s, transform 0.2s;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         .copy-toast.show {
             opacity: 1;
@@ -163,7 +198,8 @@
         .options {
             background: rgba(250, 245, 240, 0.6);
             border-radius: 36px;
-            padding: 1.2rem;
+            padding: 1.2rem 1.5rem;
+            margin-top: 0.5rem;
             text-align: center;
         }
         .style-buttons {
@@ -182,27 +218,53 @@
             padding: 8px 24px;
             border-radius: 40px;
             font-weight: 500;
+            font-size: 0.9rem;
             cursor: pointer;
+            transition: 0.2s;
+            font-family: 'Inter', sans-serif;
             color: #5e4b51;
         }
         .style-option.active {
             background: white;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
             color: #b25268;
             font-weight: 700;
         }
         .footer-info {
             text-align: center;
             font-size: 0.7rem;
-            margin-top: 1.5rem;
+            margin-top: 1.8rem;
             color: #b2959f;
         }
-        .status {
-            text-align: center;
-            font-size: 0.75rem;
-            margin-top: 1rem;
-            padding: 0.5rem;
-            border-radius: 20px;
-            background: rgba(0,0,0,0.05);
+        .install-banner {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(20px);
+            border-radius: 60px;
+            padding: 0.8rem 1.2rem;
+            color: white;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+        .install-banner.show {
+            display: flex;
+        }
+        .install-btn {
+            background: white;
+            color: #b45f6b;
+            border: none;
+            padding: 6px 18px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        @media (max-width: 550px) {
+            .install-banner { flex-direction: column; text-align: center; gap: 8px; border-radius: 28px; }
         }
     </style>
 </head>
@@ -214,40 +276,42 @@
 <div class="card">
     <div class="header">
         <div class="badge">
-            <i class="fas fa-bell"></i> <span>Push уведомления</span>
+            <i class="fas fa-magic"></i> <span>PWA · работает офлайн</span>
         </div>
         <h1>✨ Генератор ника</h1>
-        <div class="sub">Уникальные имена с push-уведомлениями</div>
+        <div class="sub">Создай запоминающийся username для игр, соцсетей или творчества</div>
     </div>
 
     <div class="name-display">
-        <div class="generated-name" id="usernameDisplay">загрузка...</div>
+        <div class="generated-name" id="usernameDisplay">lunar_whisper</div>
+        <div class="name-hint">
+            <i class="fas fa-sync-alt"></i> <span>нажми «Случайный» для генерации</span>
+        </div>
     </div>
 
     <div class="action-buttons">
         <button class="btn btn-primary" id="generateBtn">
             <i class="fas fa-dice-d6"></i> Случайное имя
         </button>
-        <button class="btn" id="copyBtn">
+        <button class="btn btn-outline" id="copyBtn">
             <i class="far fa-copy"></i> Копировать
         </button>
-        <button class="btn" id="notifyBtn">
-            <i class="fas fa-bell"></i> Вкл. уведомления
+        <button class="btn btn-outline" id="refreshBtn">
+            <i class="fas fa-arrows-rotate"></i> Другое
         </button>
     </div>
 
     <div class="options">
-        <span><i class="fas fa-palette"></i> Стиль ника:</span>
-        <div class="style-buttons" id="styleGroup">
-            <button data-style="cute" class="style-option active">🌸 Милый</button>
-            <button data-style="edgy" class="style-option">🌙 Дерзкий</button>
-            <button data-style="tech" class="style-option">⚡ Техно</button>
-        </div>
-        <div class="status" id="statusMsg">
-            <i class="fas fa-info-circle"></i> Нажмите "Вкл. уведомления"
+        <div class="style-selector">
+            <span><i class="fas fa-palette"></i> Стиль ника:</span>
+            <div class="style-buttons" id="styleGroup">
+                <button data-style="cute" class="style-option active">🌸 Милый</button>
+                <button data-style="edgy" class="style-option">🌙 Дерзкий</button>
+                <button data-style="tech" class="style-option">⚡ Техно</button>
+            </div>
         </div>
         <div class="footer-info">
-            <i class="fas fa-shield-alt"></i> Уведомления приходят даже при закрытом приложении
+            <i class="fas fa-shield-alt"></i> тысячи уникальных комбинаций
         </div>
     </div>
 </div>
@@ -255,9 +319,12 @@
 <div id="toastMsg" class="copy-toast">
     <i class="fas fa-check-circle"></i> <span>Скопировано!</span>
 </div>
+<div id="installBanner" class="install-banner">
+    <span><i class="fas fa-download"></i> Установите приложение</span>
+    <button id="installAppBtn" class="install-btn">Установить</button>
+</div>
 
 <script>
-    // ========== СЛОВАРИ ДЛЯ ГЕНЕРАЦИИ ==========
     const dictionaries = {
         cute: {
             prefixes: ["luna", "bunny", "cookie", "peach", "sunny", "honey", "dream", "star", "fairy", "twinkle", "berry", "velvet", "sugar", "glitter", "petal", "mochi", "bubbles", "choco", "vanilla", "blossom", "cotton", "cupcake"],
@@ -279,42 +346,30 @@
         }
     };
 
-    // ========== ПЕРЕМЕННЫЕ ==========
     let currentStyle = "cute";
     let currentGeneratedName = "";
-    let swRegistration = null;
-    let isSubscribed = false;
-    
-    // VAPID ключ (публичный) - для тестов используем demo ключ
-    // Для продакшена нужно сгенерировать свои ключи на https://web-push-codelab.glitch.me/
-    const applicationServerPublicKey = 'BPzXrJvqMk2XqYqXqYqXqYqXqYqXqYqXqYqXqYqXqYqXqYqXqYqXqYqXqYqXqYqXqYqXqYqXqYqXqY';
-    
-    // ========== DOM ЭЛЕМЕНТЫ ==========
+    let deferredPrompt = null;
+
     const usernameSpan = document.getElementById("usernameDisplay");
     const generateBtn = document.getElementById("generateBtn");
+    const refreshBtn = document.getElementById("refreshBtn");
     const copyBtn = document.getElementById("copyBtn");
-    const notifyBtn = document.getElementById("notifyBtn");
     const styleOptions = document.querySelectorAll(".style-option");
     const toast = document.getElementById("toastMsg");
-    const statusMsg = document.getElementById("statusMsg");
-    
-    // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
+    const installBanner = document.getElementById("installBanner");
+    const installBtn = document.getElementById("installAppBtn");
+
     function showToast(message) {
         const toastSpan = toast.querySelector("span");
         toastSpan.innerText = message;
         toast.classList.add("show");
-        setTimeout(() => toast.classList.remove("show"), 2000);
+        setTimeout(() => toast.classList.remove("show"), 1800);
     }
-    
-    function updateStatus(text, isError = false) {
-        statusMsg.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-info-circle'}"></i> ${text}`;
-        statusMsg.style.color = isError ? '#c62828' : '#6f5b62';
-    }
-    
+
     function randomItem(arr) {
         return arr[Math.floor(Math.random() * arr.length)];
     }
-    
+
     function generateUsername() {
         const dict = dictionaries[currentStyle];
         const useNumber = Math.random() < 0.35;
@@ -333,17 +388,14 @@
         if(rawName.length > 22) rawName = rawName.slice(0, 20);
         return rawName;
     }
-    
+
     function updateName() {
         currentGeneratedName = generateUsername();
         usernameSpan.innerText = currentGeneratedName;
         usernameSpan.style.transform = "scale(0.98)";
         setTimeout(() => usernameSpan.style.transform = "scale(1)", 100);
-        
-        // Отправляем push-уведомление через сервис воркер
-        sendPushNotification();
     }
-    
+
     async function copyToClipboard() {
         try {
             await navigator.clipboard.writeText(currentGeneratedName);
@@ -358,7 +410,7 @@
             showToast(`✔️ Скопировано: ${currentGeneratedName}`);
         }
     }
-    
+
     function setStyle(style) {
         currentStyle = style;
         styleOptions.forEach(btn => {
@@ -367,177 +419,36 @@
         });
         updateName();
     }
-    
-    // ========== PUSH УВЕДОМЛЕНИЯ ==========
-    function updateNotifyButton() {
-        if (isSubscribed) {
-            notifyBtn.innerHTML = '<i class="fas fa-bell-slash"></i> Выкл. уведомления';
-            notifyBtn.classList.add("btn-notify-active");
-        } else {
-            notifyBtn.innerHTML = '<i class="fas fa-bell"></i> Вкл. уведомления';
-            notifyBtn.classList.remove("btn-notify-active");
-        }
-    }
-    
-    function urlBase64ToUint8Array(base64String) {
-        const padding = '='.repeat((4 - base64String.length % 4) % 4);
-        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-        const rawData = window.atob(base64);
-        const outputArray = new Uint8Array(rawData.length);
-        for (let i = 0; i < rawData.length; ++i) {
-            outputArray[i] = rawData.charCodeAt(i);
-        }
-        return outputArray;
-    }
-    
-    async function subscribeUser() {
-        if (!swRegistration) {
-            updateStatus("Service Worker не зарегистрирован", true);
-            return false;
-        }
-        
-        try {
-            const subscribeOptions = {
-                userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array(applicationServerPublicKey)
-            };
-            
-            const pushSubscription = await swRegistration.pushManager.subscribe(subscribeOptions);
-            
-            // Сохраняем подписку в localStorage
-            localStorage.setItem('pushSubscription', JSON.stringify(pushSubscription));
-            isSubscribed = true;
-            updateNotifyButton();
-            updateStatus("✅ Уведомления включены! При каждом новом имени будет приходить push");
-            
-            // Отправляем подписку на сервер (здесь можно добавить отправку на ваш бекенд)
-            console.log('Push Subscription:', pushSubscription);
-            
-            return true;
-        } catch (error) {
-            console.error('Ошибка подписки:', error);
-            updateStatus("❌ Ошибка: " + error.message, true);
-            return false;
-        }
-    }
-    
-    async function unsubscribeUser() {
-        if (!swRegistration) return false;
-        
-        const pushSubscription = await swRegistration.pushManager.getSubscription();
-        if (pushSubscription) {
-            await pushSubscription.unsubscribe();
-            localStorage.removeItem('pushSubscription');
-            isSubscribed = false;
-            updateNotifyButton();
-            updateStatus("🔕 Уведомления выключены");
-            return true;
-        }
-        return false;
-    }
-    
-    async function sendPushNotification() {
-        if (!isSubscribed || !swRegistration) return;
-        
-        const pushSubscription = await swRegistration.pushManager.getSubscription();
-        if (!pushSubscription) return;
-        
-        // Отправляем уведомление через Service Worker
-        if (swRegistration.active) {
-            swRegistration.active.postMessage({
-                type: 'SHOW_NOTIFICATION',
-                payload: {
-                    title: '✨ Новое имя!',
-                    body: `${currentGeneratedName} (${getStyleName()})`,
-                    icon: 'icon.png',
-                    tag: 'username'
-                }
-            });
-        }
-    }
-    
-    function getStyleName() {
-        const names = { cute: "Милый", edgy: "Дерзкий", tech: "Техно" };
-        return names[currentStyle];
-    }
-    
-    async function initializePush() {
-        if (!('Notification' in window)) {
-            updateStatus("❌ Браузер не поддерживает уведомления", true);
-            return;
-        }
-        
-        if (!('PushManager' in window)) {
-            updateStatus("❌ PushManager не поддерживается", true);
-            return;
-        }
-        
-        // Проверяем HTTPS
-        if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-            updateStatus("⚠️ Для уведомлений нужен HTTPS. Выложите сайт на хостинг", true);
-            return;
-        }
-        
-        // Регистрируем Service Worker
-        try {
-            swRegistration = await navigator.serviceWorker.register('sw.js');
-            console.log('Service Worker зарегистрирован');
-            
-            // Проверяем существующую подписку
-            const subscription = await swRegistration.pushManager.getSubscription();
-            isSubscribed = subscription !== null;
-            updateNotifyButton();
-            
-            if (isSubscribed) {
-                updateStatus("✅ Уведомления включены");
-            } else {
-                updateStatus("🔔 Нажмите «Вкл. уведомления» для получения push");
-            }
-        } catch (error) {
-            console.error('Service Worker ошибка:', error);
-            updateStatus("❌ Ошибка Service Worker", true);
-        }
-    }
-    
-    // ========== ОБРАБОТЧИКИ СОБЫТИЙ ==========
+
     generateBtn.addEventListener("click", updateName);
+    refreshBtn.addEventListener("click", updateName);
     copyBtn.addEventListener("click", copyToClipboard);
-    
-    notifyBtn.addEventListener("click", async () => {
-        if (isSubscribed) {
-            await unsubscribeUser();
-        } else {
-            // Запрашиваем разрешение на уведомления
-            if (Notification.permission === 'denied') {
-                updateStatus("❌ Уведомления запрещены. Разрешите в настройках браузера", true);
-                return;
-            }
-            
-            if (Notification.permission !== 'granted') {
-                const permission = await Notification.requestPermission();
-                if (permission !== 'granted') {
-                    updateStatus("❌ Нужно разрешить уведомления", true);
-                    return;
-                }
-            }
-            
-            await subscribeUser();
-        }
-    });
     
     styleOptions.forEach(btn => {
         btn.addEventListener("click", () => setStyle(btn.dataset.style));
     });
-    
-    // ========== ЗАПУСК ==========
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBanner.classList.add('show');
+    });
+
+    installBtn.addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            installBanner.classList.remove('show');
+        }
+    });
+
     if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            initializePush();
-        });
-    } else {
-        updateStatus("❌ Service Worker не поддерживается", true);
+        navigator.serviceWorker.register('sw.js').then(reg => {
+            console.log('SW registered:', reg);
+        }).catch(err => console.log('SW error:', err));
     }
-    
+
     updateName();
 </script>
 </body>
