@@ -2,7 +2,7 @@
   "name": "Генератор имён пользователя",
   "short_name": "NameGen",
   "description": "Красивый генератор уникальных имён с выбором стиля",
-  "start_url": "/",
+  "start_url": "https://greendoh.github.io/Generator/",
   "display": "standalone",
   "theme_color": "#f9f2e7",
   "background_color": "#f9f2e7",
